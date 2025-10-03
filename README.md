@@ -1,4 +1,4 @@
-"# AgentX - Task Distribution & Management System
+# AgentX - Task Distribution & Management System
 
 AgentX is a comprehensive task distribution and management system designed to efficiently distribute tasks among multiple agents. The system enables administrators to upload tasks via CSV/Excel files and automatically distributes them among active agents using an intelligent round-robin algorithm.
 
@@ -493,4 +493,4 @@ For support, email your-email@example.com or open an issue on GitHub.
 
 ---
 
-**Built with ❤️ using Node.js, TypeScript, and MongoDB**" 
+**Built with ❤️ using Node.js, TypeScript, and MongoDB**
