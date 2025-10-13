@@ -2,6 +2,8 @@
 
 AgentX is a comprehensive task distribution and management system designed to efficiently distribute tasks among multiple agents. The system enables administrators to upload tasks via CSV/Excel files and automatically distributes them among active agents using an intelligent round-robin algorithm.
 
+# Note: Didn't use the check role middleware in the backend yet.
+
 ## 🌟 Features
 
 - **User Authentication & Authorization**

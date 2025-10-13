@@ -1,5 +1,7 @@
 # AgentX Backend
 
+# Didn't use the role verification middleware yet.
+
 This is the backend server for the AgentX task distribution and management system.
 
 ## Tech Stack
