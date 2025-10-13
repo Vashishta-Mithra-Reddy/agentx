@@ -27,7 +27,29 @@ export const uploadTasks = async (req: Request, res: Response) => {
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
-    const agents = await User.find({ role: "agent", active: true });
+    const agentId = (req as any).userId; // from auth middleware
+    const currentUser = await User.findById(agentId);
+    
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    let agents;
+    
+    if (currentUser.role === 'admin') {
+      // Admin can distribute to all agents
+      agents = await User.find({ role: "agent", active: true });
+    } else if (currentUser.role === 'agent') {
+      // Agents can distribute to their sub-agents
+      agents = await User.find({ 
+        creatorId: currentUser._id, 
+        role: "subagent", 
+        active: true 
+      });
+    } else {
+      return res.status(403).json({ message: "Unauthorized to distribute tasks" });
+    }
+    
     if (agents.length === 0)
       return res
         .status(400)
@@ -50,7 +72,7 @@ export const uploadTasks = async (req: Request, res: Response) => {
           .on("data", (data: any) => tasks.push(data))
           .on("end", async () => {
             if (!validateTasks(tasks, res)) return;
-            await saveAndDistribute(tasks, agents, res);
+            await saveAndDistribute(tasks, agents, res, agentId);
           });
       } else {
         // -------- Parse XLSX --------
@@ -58,7 +80,7 @@ export const uploadTasks = async (req: Request, res: Response) => {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         tasks = XLSX.utils.sheet_to_json(sheet);
         if (!validateTasks(tasks, res)) return;
-        await saveAndDistribute(tasks, agents, res);
+        await saveAndDistribute(tasks, agents, res, agentId);
       }
     } catch (error: any) {
       res
@@ -90,7 +112,7 @@ const validateTasks = (tasks: any[], res: Response): boolean => {
 };
 
 // ---------- Save in DB then Distribute ----------
-const saveAndDistribute = async (tasks: any[], agents: any[], res: Response) => {
+const saveAndDistribute = async (tasks: any[], agents: any[], res: Response, agentId?: string) => {
   try {
     // Step 1: Save all tasks into Task collection
     const insertedTasks = await Task.insertMany(
@@ -104,9 +126,32 @@ const saveAndDistribute = async (tasks: any[], agents: any[], res: Response) => 
     // Step 2: Get the IDs of inserted tasks
     const taskIds = insertedTasks.map((t) => t._id);
 
+    let targetAgents = agents;
+    
+    // If agentId is provided, filter agents to only include sub-agents created by this agent
+    if (agentId) {
+      const currentAgent = await User.findById(agentId);
+      if (!currentAgent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      if (currentAgent.role === 'agent') {
+        // Get only sub-agents created by this agent
+        targetAgents = await User.find({ 
+          creatorId: currentAgent._id, 
+          role: 'subagent',
+          active: true 
+        }).lean();
+        
+        if (targetAgents.length === 0) {
+          return res.status(400).json({ message: "No sub-agents available to distribute tasks" });
+        }
+      }
+    }
+
     // Step 3: Distribute IDs among agents (equal distribution first then round robin for remainder)
     const distributedTasks: { [key: string]: any } = {};
-    agents.forEach((agent) => {
+    targetAgents.forEach((agent) => {
       distributedTasks[agent._id.toString()] = new DistributedTask({
         agentId: agent._id,
         tasks: [],
@@ -114,7 +159,7 @@ const saveAndDistribute = async (tasks: any[], agents: any[], res: Response) => 
       });
     });
 
-    const numAgents = agents.length;
+    const numAgents = targetAgents.length;
     const numTasks = taskIds.length;
     const baseTasksPerAgent = Math.floor(numTasks / numAgents);
     let remainingTasksCount = numTasks % numAgents;
@@ -122,7 +167,7 @@ const saveAndDistribute = async (tasks: any[], agents: any[], res: Response) => 
 
     // Distribute baseTasksPerAgent to each agent
     for (let i = 0; i < numAgents; i++) {
-      const agentId = agents[i]._id.toString();
+      const agentId = targetAgents[i]._id.toString();
       for (let j = 0; j < baseTasksPerAgent; j++) {
         if (taskIndex < numTasks) {
           distributedTasks[agentId].tasks.push(taskIds[taskIndex]);
@@ -133,7 +178,7 @@ const saveAndDistribute = async (tasks: any[], agents: any[], res: Response) => 
 
     // Round-robin the remaining tasks
     for (let i = 0; i < remainingTasksCount; i++) {
-      const agentId = agents[i % numAgents]._id.toString();
+      const agentId = targetAgents[i % numAgents]._id.toString();
       if (taskIndex < numTasks) {
         distributedTasks[agentId].tasks.push(taskIds[taskIndex]);
         taskIndex++;

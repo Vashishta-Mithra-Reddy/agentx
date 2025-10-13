@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import User from '../models/User';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'asdfsdbgerw4fecdsve';
 
@@ -21,5 +22,20 @@ export const protect = (req: AuthRequest, res: Response, next: NextFunction) => 
     }
   } else {
     res.status(401).json({ message: 'Not authorized, no token' });
+  }
+};
+
+export const checkRole = (roles: string[]) => async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    if (!roles.includes(user.role)) {
+      return res.status(403).json({ message: 'Forbidden: Insufficient permissions' });
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ message: 'Server error during role check' });
   }
 };

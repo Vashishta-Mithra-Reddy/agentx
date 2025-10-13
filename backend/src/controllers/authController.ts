@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User, { IUser } from '../models/User';
+import { DistributedTask } from '../models/Task';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'asdfsdbgerw4fecdsve';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'cwvf3rsdvr3vweafr3rw';
@@ -97,3 +98,80 @@ export const addAgent = async (req: Request, res: Response) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+export const addSubAgent = async (req: Request, res: Response) => {
+  try {
+    const agentId = (req as any).userId;
+    const { name, email, password, mobileNumber, countryCode } = req.body;
+    
+    const user = new User({ name, email, password, mobileNumber, countryCode, role: 'subagent', active: true, creatorId: agentId });
+    await user.save();
+    res.status(201).json({ message: 'Sub Agent added successfully' });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const listAgents = async(req: Request, res: Response) =>{
+  try{
+    const agents = await User.find({ role: 'agent' }).select('-password').lean();
+
+    const agentsWithTasks = await Promise.all(agents.map(async (agent) => {
+      const distributedTasks = await DistributedTask.find({ agentId: agent._id }).populate('tasks');
+      const tasks = distributedTasks.flatMap(dt => dt.tasks);
+      // console.log(tasks);
+      return { ...agent, tasks };
+    }));
+
+    res.status(200).json(agentsWithTasks);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export const listSubAgents = async(req: Request, res: Response) =>{
+  try{
+    const agentId = (req as any).userId;
+    const agents = await User.find({ role: 'subagent',creatorId: agentId }).select('-password').lean();
+
+    const agentsWithTasks = await Promise.all(agents.map(async (agent) => {
+      const distributedTasks = await DistributedTask.find({ agentId: agent._id }).populate('tasks');
+      const tasks = distributedTasks.flatMap(dt => dt.tasks);
+      // console.log(tasks);
+      return { ...agent, tasks };
+    }));
+
+    res.status(200).json(agentsWithTasks);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export const deleteAgent = async(req: Request, res: Response) =>{
+  try{
+  const { id } = req.params;
+  await DistributedTask.deleteMany({ agentId: id });
+  await User.deleteOne({_id:id});
+  res.status(200).json({ message: 'Agent deleted successfully' });
+  }catch(error:any) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export const updateAgent = async(req: Request, res: Response) =>{
+  // console.log("request is coming in");
+  try{
+    const { id } = req.params;
+    const { name, email, mobileNumber, countryCode, active } = req.body;
+
+    const agent = await User.findByIdAndUpdate(id, { name, email, mobileNumber, countryCode, active }, { new: true });
+
+    if (!agent) {
+      return res.status(404).json({ message: 'Agent not found' });
+    }
+
+    res.status(200).json({ message: 'Agent updated successfully', agent });
+  }catch(error:any) {
+    res.status(500).json({ error: error.message });
+  }
+}

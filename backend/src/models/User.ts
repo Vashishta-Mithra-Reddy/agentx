@@ -9,6 +9,7 @@ export interface IUser extends Document {
   mobileNumber: string;
   countryCode: string;
   active: boolean;
+  creatorId?: mongoose.Types.ObjectId;
   comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
 
@@ -41,6 +42,11 @@ const UserSchema: Schema = new Schema({
   active: {
     type: Boolean,
     default: false,
+  },
+  creatorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false,
   },
 });
 
