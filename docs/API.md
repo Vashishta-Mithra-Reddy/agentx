@@ -790,5 +790,5 @@ curl -X POST http://localhost:5000/api/tasks/upload \
 ## Support
 
 For API issues or questions:
-- GitHub Issues: [Create an issue](https://github.com/Vashishta-Mithra-Reddy/agentx/issues)
+- GitHub Issues: [Create an issue](https://github.com/vxshta/agentx/issues)
 - Email: your-email@example.com

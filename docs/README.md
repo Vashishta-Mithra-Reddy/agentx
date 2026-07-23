@@ -93,7 +93,7 @@ Tasks are distributed equally among active agents using a fair round-robin algor
 ### Setting Up Development Environment
 ```bash
 # Clone repository
-git clone https://github.com/Vashishta-Mithra-Reddy/agentx.git
+git clone https://github.com/vxshta/agentx.git
 cd agentx/backend
 
 # Install dependencies
@@ -161,8 +161,8 @@ When contributing documentation:
 ## 📞 Getting Help
 
 If you can't find what you're looking for:
-- Check the [GitHub Issues](https://github.com/Vashishta-Mithra-Reddy/agentx/issues)
-- Review existing [Discussions](https://github.com/Vashishta-Mithra-Reddy/agentx/discussions)
+- Check the [GitHub Issues](https://github.com/vxshta/agentx/issues)
+- Review existing [Discussions](https://github.com/vxshta/agentx/discussions)
 - Open a new issue with the "documentation" label
 
 ## 📄 License

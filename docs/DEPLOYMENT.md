@@ -266,7 +266,7 @@ For full control over your deployment.
 
 5. **Clone Repository**
    ```bash
-   git clone https://github.com/Vashishta-Mithra-Reddy/agentx.git
+   git clone https://github.com/vxshta/agentx.git
    cd agentx/backend
    ```
 

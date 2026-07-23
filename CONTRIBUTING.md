@@ -50,7 +50,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 3. **Add upstream remote**
    ```bash
-   git remote add upstream https://github.com/Vashishta-Mithra-Reddy/agentx.git
+   git remote add upstream https://github.com/vxshta/agentx.git
    ```
 
 4. **Install backend dependencies**
@@ -472,7 +472,7 @@ Any other relevant information
 
 If you have questions about contributing:
 
-- Open a [GitHub Discussion](https://github.com/Vashishta-Mithra-Reddy/agentx/discussions)
+- Open a [GitHub Discussion](https://github.com/vxshta/agentx/discussions)
 - Open an issue with the "question" label
 - Reach out to maintainers
 
